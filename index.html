@@ -1,82 +1,101 @@
 <!DOCTYPE html>
-<html>
-<head>
+<html lang="en">
+  <head>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge' />
+    <meta http-equiv='Content-Type' content='text/html; charset=utf-8' />
+    <title>codemePrajna</title>
 
-    <title>A1C History</title>
-    <script src="fhir-client.js"></script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-</head>
-<body>
+    <link rel='stylesheet' type='text/css' href='./src/css/example-smart-app.css'>
+    <!--
+      Temporarily disable cerner-smart-embeddable-lib
+      <link rel='stylesheet' type='text/css' href='./lib/css/cerner-smart-embeddable-lib-1.0.0.min.css'>
+    -->
+  </head>
+  <body>
+    <div id='errors'>
+    </div>
+    <div id="loading" class="spinner">
+      <div class="bounce1"></div>
+      <div class="bounce2"></div>
+      <div class="bounce3"></div>
+    </div>
+    <div id='holder' >
+      <h2>SOF-CO-POC</h2>
 
-<h1 id="status">Retrieving A1C Data...</h1>
+      <h2>Patient Resource</h2>
+      <table>
+        <tr>
+          <th>First Name:</th>
+          <td id='fname'></td>
+        </tr>
+        <tr>
+          <th>Last Name:</th>
+          <td id='lname'></td>
+        </tr>
+        <tr>
+          <th>Gender:</th>
+          <td id='gender'></td>
+        </tr>
+        <tr>
+          <th>Date of Birth:</th>
+          <td id='birthdate'></td>
+        </tr>
+      </table>
+      <h2>Observation Resource</h2>
+      <table>
+        <tr>
+          <th>Height:</th>
+          <td id='height'></td>
+        </tr>
+        <tr>
+          <th>Systolic Blood Pressure:</th>
+          <td id='systolicbp'></td>
 
-<p>
-    <a href="https://cdswaggy-clientcareorchestrator.cloud.pcftest.com/#/patient/4501fc4f-ed2b-428a-9089-fafb67c77f25/diagnostics"  target="_blank">Access Care Orchestrator</a>
-</p>
-<div id="chart" style="width:600px;height:400px;"></div>
+        </tr>
+        <tr>
+          <th>Diastolic Blood Pressure:</th>
+          <td id='diastolicbp'></td>
+        </tr>
+        <tr>
+          <th>LDL:</th>
+          <td id='ldl'></td>
+        </tr>
+        <tr>
+          <th>HDL:</th>
+          <td id='hdl'></td>
+        </tr>
+      </table>
+    </div>
+    <!-- Required JS files to enable this page to embed within an MPage -->
+    <!--
+      Temporarily disable cerner-smart-embeddable-lib
+      <script src='https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.26.0/polyfill.min.js'></script>
+      <script src='./lib/js/cerner-smart-embeddable-lib-1.0.0.min.js'></script>
+    -->
 
-<script>
+    <!-- Application-level javascript-->
+    <script src='./src/js/example-smart-app.js'></script>
 
-    FHIR.oauth2.ready( getA1Cdata, showError );
+    <!-- FHIR Client JS Library -->
+    <script src='./lib/js/fhir-client-v0.1.12.js'></script>
 
-    var statusDiv =  document.getElementById("status");
-    var chartDiv = document.getElementById("chart");
+    <!-- Prevent session bleed caused by single threaded embedded browser and sessionStorage API -->
+    <!-- https://github.com/cerner/fhir-client-cerner-additions -->
+    <script src='./lib/js/fhir-client-cerner-additions-1.0.0.js'></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script>
+      extractData().then(
+        //Display Patient Demographics and Observations if extractData was success
+        function(p) {
+          drawVisualization(p);
+        },
 
-    function getA1Cdata(smart) {
-
-        smart.patient.api.search({
-            type: "Observation",
-            query: {
-                code: "4548-4",
-                "_sort:desc": "date",
-                _count: 10
-            }
-
-        }).then( function(fhirObservations) {
-
-            var dates = [];
-            var values = [];
-
-            (fhirObservations.data.entry || []).forEach( function(a1c) {
-                var date = a1c.resource.effectiveDateTime;
-                var value = a1c.resource.valueQuantity && a1c.resource.valueQuantity.value;
-                if (date && value && dates.indexOf(date) == -1) {
-                    dates.push(date);
-                    values.push(Math.round(value*10)/10);
-                };
-            });
-
-            if (values.length === 0)
-                return statusDiv.innerHTML = "No A1C observations found.";
-
-            statusDiv.style.display = "none";
-
-            Plotly.newPlot(chartDiv, {
-                data: [{
-                    x: dates,
-                    y: values,
-                    type: "scatter"
-                }],
-                layout: {
-                    title: "A1C Lab Values",
-                    xaxis: {type: "date", tickformat: "%b %y"},
-                    yaxis: {range: [0, 10]}
-                },
-                config: {
-                    displayModeBar: false
-                }
-            });
-        });
-
-    }
-
-    function showError(error) {
-        return statusDiv.innerHTML = "An error occurred connecting to the EHR";
-    }
-
-</script>
-
-</body>
+        //Display 'Failed to call FHIR Service' if extractData failed
+        function() {
+          $('#loading').hide();
+          $('#errors').html('<p> Failed to call FHIR Service </p>');
+        }
+      );
+    </script>
+  </body>
 </html>
-
-
