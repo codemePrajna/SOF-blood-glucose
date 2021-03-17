@@ -87,7 +87,29 @@
       extractData().then(
         //Display Patient Demographics and Observations if extractData was success
         function(p) {
-          window.open('https://cti-clientcareorchestrator.cloud.pcftest.com/#/patient/d4ce383b-9a14-43f1-89a8-1c0fdec533fd/prescription/',"_self");
+          var url = "https://cti-clientcareorchestrator.cloud.pcftest.com/proxy/patientgateway-v1-server/patient/search?s=testexternalid&page=1&pageSize=25&searchBy=ExID&sortBy=relevancy&sortOrder=desc&active=true&inactive=true";
+          var auth_token = '{"userId":"62bce366-4b97-48bd-a693-43e95d38b8bf","uniqueId":"9d735b0d-5fe1-4f17-b326-e0a714542689","hash":"L344wTcfUZ/aMcwcrFeJ1I+ipCKFXRZh34G6Ke1CKGQrFgfz/cLnVQ0OmDMJ0KOWo9/GDohheiI0tcFtML5L3Q==","timeToLive":900}';
+          fetch(url, {
+            method: 'GET',
+            headers: {
+              'auth_token': auth_token,
+              'Content-Type': 'application/json'
+            }
+          }).then(function(data){
+            console.log(data.patientId);
+          })
+                  .catch(error => this.setState({
+                    isLoading: false,
+                    message: 'Something bad happened ' + error
+                  }));
+          /*fetch('https://cti-clientcareorchestrator.cloud.pcftest.com/proxy/patientgateway-v1-server/patient/search?s=testexternalid&page=1&pageSize=25&searchBy=ExID&sortBy=relevancy&sortOrder=desc&active=true&inactive=true')
+                  .then(function(response){
+                    return response.json();
+                  })
+                  .then(function(data){
+                    console.log(data.patientId);
+                  })*/
+          //window.open('https://cti-clientcareorchestrator.cloud.pcftest.com/#/patient/d4ce383b-9a14-43f1-89a8-1c0fdec533fd/prescription/',"_self");
         },
 
         //Display 'Failed to call FHIR Service' if extractData failed
